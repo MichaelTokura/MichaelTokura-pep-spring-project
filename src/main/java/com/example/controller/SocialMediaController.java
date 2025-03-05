@@ -26,99 +26,88 @@ import com.example.service.MessageService;
  * refer to prior mini-project labs and lecture materials for guidance on how a controller may be built.
  */
 @RestController
-//@RequestMapping("/api")
 public class SocialMediaController {
     
-    private AccountService accountService;
-    private MessageService messageService;
-    MessageRepository messageRepository;
-    AccountRepository accountRepository;
-    public SocialMediaController(AccountService accountService,MessageService messageService){
-        this.messageService = messageService;
-        this.accountService = accountService;
+    private AccountService accServ;
+    private MessageService MessServ;
+    MessageRepository messRepo;
+    AccountRepository accRepo;
+    public SocialMediaController(AccountService as,MessageService ms){
+        this.MessServ = ms;
+        this.accServ = as;
     }
     
-    /*1: Our API should be able to process new User registrations. */
     @PostMapping("/register")
-    public ResponseEntity<Object> newUserAccountRegister(@RequestBody Account account) {
-        Account registeredAccount = accountService.getAccountByUsername(account.getUsername());
-        if(registeredAccount != null) {
+    public ResponseEntity<Object> newUserAccountRegister(@RequestBody Account acc) {
+        Account rAcc = accServ.getAccountByUsername(acc.getUsername());
+        if(rAcc != null) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
-        Account saveAcc=accountService.saveAccount(account);
+        Account saveAcc=accServ.saveAccount(acc);
         return new ResponseEntity<>(saveAcc,HttpStatus.OK);
     }
-    /*2: Our API should be able to process User logins. */
     @PostMapping("/login")
     public ResponseEntity<Object> verifyUserLogin(@RequestBody Account account) {
-        String storedUsername = accountService.getUserNameString(account);
-        if (storedUsername != null && storedUsername.equals(account.getUsername())) {
-            // User exists, now check if the password matches
-            Account storedAcc = accountService.getAccountByUsername(account.getUsername());
+        String strUser = accServ.getUserNameString(account);
+        if (strUser != null && strUser.equals(account.getUsername())) {
+            Account storedAcc = accServ.getAccountByUsername(account.getUsername());
     
             if (storedAcc != null && storedAcc.getPassword().equals(account.getPassword())) {
-                // Login successful
                 return new ResponseEntity<>(storedAcc,HttpStatus.OK);
             }
             else {
-                // Password doesn't match
                 return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
             }
         }
         else {
-            // User doesn't exist
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
     }
-    /*3: Our API should be able to process the creation of new messages. */
     @PostMapping("/messages")
     public ResponseEntity<Message> addNewMessageController(@RequestBody Message message){
         if((!message.getMessageText().isBlank()) && (message.getMessageText().length()<=255)){
-            Message m = messageService.createNewMessageService(message);
-            if(m!=null)
-                return new ResponseEntity<>(m, HttpStatus.OK);
+            Message mess = MessServ.createNewMessageService(message);
+            if(mess!=null)
+                return new ResponseEntity<>(mess, HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
-    /* 4: Our API should be able to retrieve all messages.*/
     @GetMapping("/messages")
     public ResponseEntity<List<Message>> getAllMessages() {
-        List<Message> messages = messageService.getAllMessages();
+        List<Message> messages = MessServ.getAllMessages();
 
         if (messages.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.OK); // Return 200 with an empty response body
+            return new ResponseEntity<>(HttpStatus.OK); 
         } else {
-            return new ResponseEntity<>(messages, HttpStatus.OK); // Return 200 with the list of messages
+            return new ResponseEntity<>(messages, HttpStatus.OK); 
         }
     }
-    /*5: Our API should be able to retrieve a message by its ID.  */
     @GetMapping("/messages/{message_id}")
     public Message getMsgById(@PathVariable int message_id){
-       return messageService.getMessageById(message_id);
+       return MessServ.getMessageById(message_id);
     }
-    /*6: Our API should be able to delete a message identified by a message ID.*/
     @DeleteMapping("/messages/{message_id}")
     public ResponseEntity<Object> deletedMsgByMsgID(@PathVariable int message_id){
-        int rowsUpdated = messageService.deleteMessageById(message_id);
-        if(rowsUpdated == 1) {
-            return new ResponseEntity<>(rowsUpdated, HttpStatus.OK);//Message deleted succesfully
+        int upRows = MessServ.deleteMessageById(message_id);
+        if(upRows == 1) {
+            return new ResponseEntity<>(upRows, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.OK); // Message did not exist
+            return new ResponseEntity<>(HttpStatus.OK); 
         }
     } 
-    /*7: Our API should be able to update a message text identified by a message ID.done */
+    
     @PatchMapping("/messages/{message_id}")
     public ResponseEntity<Integer> updateMsgByMsgId(@PathVariable int message_id, @RequestBody Message replacement){
         if((!replacement.getMessageText().isBlank()) && (replacement.getMessageText().length()<=255)){
-            int i = messageService.updateMessageById(message_id, replacement);
+            int i = MessServ.updateMessageById(message_id, replacement);
             if(i==1)
             return new ResponseEntity<>(i,HttpStatus.OK);              
     }
     return new ResponseEntity<>(HttpStatus.BAD_REQUEST); 
     }
-    /* 8: Our API should be able to retrieve all messages written by a particular user. */
+    
     @GetMapping("accounts/{account_id}/messages")
     public List<Message> getMessagesOfaUser(@PathVariable int account_id){
-        return messageService.getMessagesOfaUser(account_id);
+        return MessServ.getMessagesOfaUser(account_id);
     }
 }
